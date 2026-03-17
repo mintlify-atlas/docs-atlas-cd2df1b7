@@ -1,0 +1,132 @@
+---
+title: "SDK selection"
+description: "Choose between the Claude, OpenCode, and Copilot SDKs for AI-powered reverse engineering."
+---
+
+The `sdk` config key controls which AI backend performs the reverse engineering step. Each SDK connects to a different service and has different requirements.
+
+## Available SDKs
+
+<Tabs>
+  <Tab title="claude (default)">
+    Direct integration with the Anthropic Claude API via the `claude-agent-sdk` package.
+
+    **Requirements:**
+    - `ANTHROPIC_API_KEY` environment variable
+
+    **Config:**
+    ```json
+    {
+      "sdk": "claude",
+      "claude_code_model": "claude-sonnet-4-6"
+    }
+    ```
+
+    This is the default SDK and requires no additional installation beyond the base package. The model is controlled by the `claude_code_model` setting.
+  </Tab>
+  <Tab title="opencode">
+    Uses a locally running OpenCode server. Requests are sent to `http://127.0.0.1:4096` via httpx.
+
+    **Requirements:**
+    - OpenCode must be running locally before you start the CLI
+    - No additional pip extras required
+
+    **Config:**
+    ```json
+    {
+      "sdk": "opencode",
+      "opencode_model": "claude-opus-4-6",
+      "opencode_provider": "anthropic"
+    }
+    ```
+
+    The `opencode_model` and `opencode_provider` settings are passed to the OpenCode server. This gives you access to any model your OpenCode instance supports, including Gemini models via Google's API.
+  </Tab>
+  <Tab title="copilot">
+    GitHub Copilot SDK integration. Uses models available through your GitHub Copilot subscription.
+
+    **Requirements:**
+    - Install with the `[copilot]` extra: `pip install 'reverse-api-engineer[copilot]'`
+    - A valid GitHub Copilot subscription
+
+    **Config:**
+    ```json
+    {
+      "sdk": "copilot",
+      "copilot_model": "gpt-5"
+    }
+    ```
+
+    The `copilot_model` setting controls which model is used. The default is `gpt-5`.
+  </Tab>
+</Tabs>
+
+## When to use each SDK
+
+| SDK | Use when |
+|---|---|
+| `claude` | You have an Anthropic API key and want the simplest setup |
+| `opencode` | You're already running OpenCode locally and want to use its model routing |
+| `copilot` | You have a GitHub Copilot subscription and want to avoid separate API costs |
+
+## How to switch SDKs
+
+<Tabs>
+  <Tab title="/settings command">
+    Type `/settings` at the CLI prompt, then select **SDK**. Choose from `claude`, `opencode`, or `copilot`.
+  </Tab>
+  <Tab title="config.json">
+    Edit `~/.reverse-api/config.json` directly:
+
+    ```json
+    {
+      "sdk": "opencode"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## OpenCode SDK setup
+
+The OpenCode SDK connects to a local OpenCode server on port 4096. You must start OpenCode before launching Reverse API Engineer:
+
+```bash
+opencode          # Start OpenCode in one terminal
+reverse-api-engineer  # Then start Reverse API Engineer in another
+```
+
+<Note>
+  Set the `OPENCODE_DEBUG=1` environment variable to enable verbose logging for the OpenCode SDK connection. This is useful for diagnosing connection or model routing issues.
+</Note>
+
+```bash
+export OPENCODE_DEBUG=1
+reverse-api-engineer
+```
+
+## Copilot SDK setup
+
+Install the `[copilot]` extra to enable the Copilot SDK:
+
+<CodeGroup>
+
+```bash uv
+uv tool install 'reverse-api-engineer[copilot]'
+```
+
+```bash pip
+pip install 'reverse-api-engineer[copilot]'
+```
+
+</CodeGroup>
+
+Then set `sdk` to `copilot` and configure `copilot_model`:
+
+```json
+{
+  "sdk": "copilot",
+  "copilot_model": "gpt-5"
+}
+```
+
+You can change the model via `/settings` → **Copilot Model**. The field accepts any model identifier your Copilot subscription supports, such as `gpt-5` or `gpt-4.1`.

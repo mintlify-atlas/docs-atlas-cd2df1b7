@@ -1,0 +1,236 @@
+---
+title: "CLI commands"
+description: "Terminal subcommands and interactive slash commands for Reverse API Engineer."
+---
+
+Reverse API Engineer has two sets of commands:
+
+- **CLI subcommands** — run from your terminal to launch specific modes or install integrations.
+- **Slash commands** — used inside the interactive REPL to configure settings, view history, and navigate runs.
+
+---
+
+## CLI subcommands
+
+### `reverse-api-engineer`
+
+Launches the interactive REPL. This is the default command when no subcommand is provided.
+
+```bash
+reverse-api-engineer
+```
+
+The REPL starts in **agent** mode. Press **Shift+Tab** to cycle through modes: `agent → manual → engineer → collector`.
+
+<Tip>
+Tab completion is available throughout the interactive CLI. Use it for slash commands, tag names, and run IDs.
+</Tip>
+
+---
+
+### `reverse-api-engineer manual`
+
+Starts a manual browser session directly from the terminal, bypassing the REPL prompt.
+
+```bash
+reverse-api-engineer manual [OPTIONS]
+```
+
+#### Options
+
+<ParamField path="--prompt" type="string">
+  Description of the capture session. Displayed in run history and used to name the output directory.
+
+  Alias: `-p`
+</ParamField>
+
+<ParamField path="--url" type="string">
+  Starting URL opened when the browser launches. If omitted, the browser opens without a URL.
+
+  Alias: `-u`
+</ParamField>
+
+<ParamField path="--reverse-engineer / --no-engineer" type="boolean" default="true">
+  Whether to run AI reverse engineering after the browser session ends. Use `--no-engineer` to record HAR only.
+</ParamField>
+
+<ParamField path="--model" type="string" default="claude-sonnet-4-6">
+  Model to use for reverse engineering. Accepted values: `claude-sonnet-4-6`, `claude-opus-4-6`, `claude-haiku-4-5`.
+
+  Alias: `-m`
+</ParamField>
+
+<ParamField path="--output-dir" type="string">
+  Custom directory for storing HAR files and generated scripts. Defaults to `~/.reverse-api/runs`.
+
+  Alias: `-o`
+</ParamField>
+
+#### Examples
+
+```bash
+# Basic capture with a prompt
+reverse-api-engineer manual --prompt "fetch Apple job listings"
+
+# Record only, no AI generation
+reverse-api-engineer manual --prompt "explore checkout flow" --no-engineer
+
+# Specify a model and starting URL
+reverse-api-engineer manual -p "get GitHub user data" -u https://github.com -m claude-opus-4-6
+
+# Write output to a custom directory
+reverse-api-engineer manual -p "capture login flow" -o ./my-captures
+```
+
+---
+
+### `reverse-api-engineer engineer`
+
+Re-runs AI reverse engineering on a previous capture session.
+
+```bash
+reverse-api-engineer engineer <run_id>
+```
+
+<ParamField path="run_id" type="string" required>
+  The 12-character run identifier. Find run IDs with `/history` in the REPL.
+</ParamField>
+
+#### Example
+
+```bash
+reverse-api-engineer engineer abc123def456
+```
+
+<Note>
+For more control — such as passing custom instructions or starting fresh — use engineer mode inside the interactive REPL with the `@id` tag. See the [Tags reference](/reference/tags) for details.
+</Note>
+
+---
+
+### `reverse-api-engineer install-host`
+
+Installs the native messaging host that connects the Chrome extension to the CLI.
+
+```bash
+reverse-api-engineer install-host --extension-id <id>
+```
+
+<ParamField path="--extension-id" type="string" required>
+  The 32-character extension ID shown in `chrome://extensions/` after loading the unpacked extension.
+</ParamField>
+
+#### Example
+
+```bash
+reverse-api-engineer install-host --extension-id abcdefghijklmnopabcdefghijklmnop
+```
+
+See the [Chrome extension guide](/integrations/chrome-extension) for the full setup steps.
+
+---
+
+## Slash commands
+
+Slash commands are available inside the interactive REPL. Type `/` to trigger tab completion and see all available commands.
+
+### `/settings`
+
+Opens an interactive menu to configure the tool. Changes are saved immediately to `~/.reverse-api/config.json`.
+
+```bash
+/settings
+```
+
+Configurable options:
+
+| Setting | Description |
+|---------|-------------|
+| Agent Provider | Choose between `auto`, `browser-use`, or `stagehand` |
+| Browser-Use Model | Model for the browser-use agent provider |
+| Claude Code Model | Model for reverse engineering with the Claude SDK |
+| Copilot Model | Model when using the Copilot SDK |
+| OpenCode Model | Model for reverse engineering with OpenCode SDK |
+| OpenCode Provider | Provider identifier for OpenCode (e.g., `anthropic`, `google`) |
+| Output Directory | Custom path for HAR files and scripts (default: `~/.reverse-api/runs`) |
+| Output Language | Language for generated API clients: `python`, `javascript`, `typescript` |
+| Real-time Sync | Whether to write generated files to disk as they are streamed |
+| SDK | Active SDK: `claude`, `opencode`, or `copilot` |
+| Stagehand Model | Model for the stagehand agent provider |
+
+---
+
+### `/history`
+
+Displays a list of your 15 most recent runs, including the prompt, estimated cost, and run ID. Select a run to view full details or re-run engineering on it.
+
+```bash
+/history
+```
+
+---
+
+### `/messages <run_id>`
+
+Shows the detailed message log for a specific run — every prompt, tool call, tool result, and completion event stored from that session.
+
+```bash
+/messages <run_id>
+```
+
+<ParamField path="run_id" type="string" required>
+  The 12-character run identifier. Tab completion is available after `/messages `.
+</ParamField>
+
+**Example**
+
+```bash
+/messages abc123def456
+```
+
+---
+
+### `/help`
+
+Prints all available slash commands with brief descriptions. Also available as `/commands`.
+
+```bash
+/help
+```
+
+---
+
+### `/exit` / `/quit`
+
+Exits the interactive REPL and returns to your shell.
+
+```bash
+/exit
+```
+
+```bash
+/quit
+```
+
+---
+
+## Quick reference
+
+### CLI subcommands
+
+| Command | Description |
+|---------|-------------|
+| `reverse-api-engineer` | Launch the interactive REPL (default) |
+| `reverse-api-engineer manual [OPTIONS]` | Start a manual browser capture session |
+| `reverse-api-engineer engineer <run_id>` | Re-run engineering on a previous capture |
+| `reverse-api-engineer install-host --extension-id <id>` | Install the Chrome extension native host |
+
+### Slash commands
+
+| Command | Description |
+|---------|-------------|
+| `/settings` | Configure model, SDK, agent provider, output directory, and more |
+| `/history` | View past runs with prompts and costs |
+| `/messages <run_id>` | View detailed message logs for a run |
+| `/help` | Show all available commands |
+| `/exit` or `/quit` | Quit the REPL |

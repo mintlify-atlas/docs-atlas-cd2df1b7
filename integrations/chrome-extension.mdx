@@ -1,0 +1,105 @@
+---
+title: "Chrome Extension"
+description: "A Chrome extension that provides browser-native HAR capture and a side panel interface for reverse-api-engineer."
+---
+
+<Warning>
+  The Chrome extension is a work in progress. Functionality may be incomplete or subject to change.
+</Warning>
+
+The Chrome extension provides browser-native integration with the reverse-api-engineer CLI. Instead of launching a separate Playwright browser, you can capture traffic directly from your existing Chrome session and interact with the reverse engineering process through a side panel.
+
+## Features
+
+<CardGroup cols={2}>
+  <Card title="HAR capture" icon="network-wired">
+    Record network traffic using Chrome's Debugger API directly from any tab.
+  </Card>
+  <Card title="Side panel UI" icon="sidebar">
+    An interactive side panel for managing captures and chatting with the AI agent.
+  </Card>
+  <Card title="Native host integration" icon="plug">
+    Communicates with the reverse-api-engineer CLI tool via Chrome's native messaging API.
+  </Card>
+  <Card title="Real Chrome session" icon="chrome">
+    Capture traffic from your real browser session, including cookies and existing authentication.
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+Before setting up the extension, make sure you have the following installed:
+
+- **Node.js and npm**
+- **Chrome browser**
+- **reverse-api-engineer CLI** — install with `uv tool install reverse-api-engineer`
+- **Claude Code CLI** — install with `npm install -g @anthropic-ai/claude-code`
+
+## Setup
+
+<Steps>
+  <Step title="Build the extension">
+    From the root of the repository, build the extension:
+
+    ```bash
+    cd chrome-extension
+    npm install
+    npm run build
+    ```
+
+    This creates a `dist/` directory inside `chrome-extension/` with the compiled extension files.
+  </Step>
+
+  <Step title="Load the extension in Chrome">
+    1. Open Chrome and go to `chrome://extensions/`
+    2. Enable **Developer mode** using the toggle in the top-right corner
+    3. Click **Load unpacked**
+    4. Select the `chrome-extension/dist` directory
+
+    The extension appears in your list of installed extensions.
+  </Step>
+
+  <Step title="Copy the extension ID">
+    After loading the extension, you'll see a 32-character string under the extension name — this is the extension ID. Copy it; you'll need it in the next step.
+
+    The ID looks like: `abcdefghijklmnopabcdefghijklmnop`
+  </Step>
+
+  <Step title="Install the native host">
+    The native host connects the Chrome extension to the reverse-api-engineer CLI. Run:
+
+    ```bash
+    reverse-api-engineer install-host --extension-id YOUR_EXTENSION_ID
+    ```
+
+    Replace `YOUR_EXTENSION_ID` with the 32-character ID you copied in the previous step.
+  </Step>
+
+  <Step title="Approve Claude Code on macOS (if needed)">
+    On macOS, Gatekeeper may block Claude Code the first time it runs via the native host. To approve it, run:
+
+    ```bash
+    claude --version
+    ```
+
+    If macOS shows a security popup, go to **System Settings > Privacy & Security** and click **Allow Anyway**, then run the command again.
+
+    <Note>
+      This step is only needed on macOS and only needs to be done once.
+    </Note>
+  </Step>
+</Steps>
+
+## Development workflow
+
+If you're working on the extension itself:
+
+```bash
+# Watch mode — rebuilds automatically on file changes
+npm run dev
+
+# Production build
+npm run build
+```
+
+After rebuilding in watch mode, reload the extension in `chrome://extensions/` by clicking the refresh icon next to the extension entry.

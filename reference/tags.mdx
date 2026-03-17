@@ -1,0 +1,202 @@
+---
+title: "Tags"
+description: "Fine-grained control tags for all modes."
+---
+
+Tags let you modify how a prompt is processed without leaving the interactive CLI. Prefix your prompt with the appropriate tag, and the tool adjusts its behavior automatically.
+
+<Tip>
+Tab completion is available for all tags in the interactive CLI. Type `@` to see available tags for the current mode.
+</Tip>
+
+## Manual and agent mode tags
+
+Use these tags when you are in **manual** or **agent** mode.
+
+### `@record-only`
+
+Record the HAR file only. Skip the reverse engineering step entirely.
+
+<ParamField path="prompt" type="string">
+  Optional description of the session. Used to label the run in history.
+</ParamField>
+
+**Syntax**
+
+```bash
+@record-only [prompt]
+```
+
+**Example**
+
+```bash
+@record-only navigate checkout flow
+```
+
+When to use it: when you want to capture traffic now and engineer the API client later. After recording, you can re-process the capture in engineer mode using `@id <run_id> <prompt>`.
+
+<Note>
+After a `@record-only` session completes, the CLI prints the `run_id`. Keep it handy to reference the capture later.
+</Note>
+
+---
+
+### `@codegen`
+
+Record browser actions (clicks, form fills, navigations) and generate a Playwright automation script instead of an API client.
+
+<ParamField path="prompt" type="string">
+  Optional description of the task. Included in the generated script as context.
+</ParamField>
+
+**Syntax**
+
+```bash
+@codegen [prompt]
+```
+
+**Example**
+
+```bash
+@codegen navigate to google
+```
+
+When to use it: when you need a reusable browser automation script rather than a raw API client. The generated Playwright script captures every interaction you perform and turns it into reproducible code.
+
+---
+
+## Engineer mode tags
+
+Use these tags when you are in **engineer** mode to target a specific run or change how the AI processes an existing capture.
+
+### `@id <run_id>`
+
+Switch the active context to a specific run ID. The next prompt you send will operate on that run's HAR data.
+
+<ParamField path="run_id" type="string" required>
+  The 12-character run identifier. You can find run IDs in `/history`.
+</ParamField>
+
+**Syntax**
+
+```bash
+@id <run_id>
+```
+
+**Example**
+
+```bash
+@id abc123
+```
+
+---
+
+### `@id <run_id> <prompt>`
+
+Run the reverse engineer on a specific capture with custom instructions. The prompt is applied additively on top of any previously generated scripts for that run.
+
+<ParamField path="run_id" type="string" required>
+  The 12-character run identifier.
+</ParamField>
+
+<ParamField path="prompt" type="string" required>
+  Instructions for the AI. Describes what you want changed or extracted.
+</ParamField>
+
+**Syntax**
+
+```bash
+@id <run_id> <prompt>
+```
+
+**Example**
+
+```bash
+@id abc123 extract user profile
+```
+
+---
+
+### `@id <run_id> --fresh <prompt>`
+
+Re-engineer a specific run from scratch, ignoring any previously generated scripts. Use this when you want a clean slate rather than iterating on existing output.
+
+<ParamField path="run_id" type="string" required>
+  The 12-character run identifier.
+</ParamField>
+
+<ParamField path="prompt" type="string">
+  New instructions for the AI. If omitted, the original capture prompt is used.
+</ParamField>
+
+**Syntax**
+
+```bash
+@id <run_id> --fresh [prompt]
+```
+
+**Example**
+
+```bash
+@id abc123 --fresh restart analysis
+```
+
+<Warning>
+The `--fresh` flag discards context from previous engineering passes for this run. Prior scripts are not deleted from disk, but the AI starts without awareness of them.
+</Warning>
+
+---
+
+### `@docs`
+
+Generate an OpenAPI specification from the most recent run's captured traffic.
+
+**Syntax**
+
+```bash
+@docs
+```
+
+**Example**
+
+```bash
+@docs
+```
+
+When to use it: after you have a capture session and want API documentation rather than a client implementation. The generated OpenAPI spec is saved alongside the run's other output files.
+
+---
+
+### `@id <run_id> @docs`
+
+Generate an OpenAPI specification for a specific run rather than the most recent one.
+
+<ParamField path="run_id" type="string" required>
+  The 12-character run identifier of the capture you want to document.
+</ParamField>
+
+**Syntax**
+
+```bash
+@id <run_id> @docs
+```
+
+**Example**
+
+```bash
+@id abc123 @docs
+```
+
+---
+
+## Quick reference
+
+| Tag | Mode | Description |
+|-----|------|-------------|
+| `@record-only [prompt]` | manual, agent | Record HAR only, skip reverse engineering |
+| `@codegen [prompt]` | manual | Record actions and generate Playwright script |
+| `@id <run_id>` | engineer | Switch context to a specific run |
+| `@id <run_id> <prompt>` | engineer | Re-engineer a run with new instructions |
+| `@id <run_id> --fresh <prompt>` | engineer | Re-engineer from scratch |
+| `@docs` | engineer | Generate OpenAPI spec for the latest run |
+| `@id <run_id> @docs` | engineer | Generate OpenAPI spec for a specific run |

@@ -1,0 +1,233 @@
+---
+title: "Contributing"
+description: "Set up a development environment, run tests, and contribute to Reverse API Engineer."
+---
+
+## Development setup
+
+<Steps>
+  <Step title="Clone the repository">
+    Fork the repo, then clone your fork:
+
+    ```bash
+    git clone https://github.com/kalil0321/reverse-api-engineer.git
+    cd reverse-api-engineer
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    ```bash
+    uv sync
+    playwright install chromium
+    ```
+  </Step>
+
+  <Step title="Run locally">
+    ```bash
+    uv run reverse-api-engineer
+    ```
+  </Step>
+</Steps>
+
+## Building
+
+Run the clean build script to remove all caches and artifacts before building:
+
+```bash
+./scripts/clean_build.sh
+```
+
+## Testing
+
+There is no automated test runner invocation — you test by installing and running the tool directly.
+
+<CodeGroup>
+
+```bash Test as installed package
+# Creates an isolated venv and installs the wheel
+python -m venv test_env
+test_env/bin/pip install dist/*.whl
+test_env/bin/reverse-api-engineer
+```
+
+```bash Test with uv tool
+uv tool install .
+reverse-api-engineer
+```
+
+</CodeGroup>
+
+## Linting and static analysis
+
+<CodeGroup>
+
+```bash Run all checks
+./scripts/lint.sh
+```
+
+```bash Linter
+uv run ruff check src
+```
+
+```bash Formatter
+uv run ruff format src
+```
+
+```bash Type checker
+uv run mypy src
+```
+
+</CodeGroup>
+
+## Code style conventions
+
+- **Type hints**: Use type hints throughout (`from typing import Optional, Dict, Any`).
+- **Async/await**: Engineers use `async`/`await` for LLM streaming.
+- **Terminal output**: Use [Rich](https://github.com/Textualize/rich) for all terminal output — no plain `print` statements.
+- **Error handling**: Wrap external calls in `try`/`except` with user-friendly messages.
+- **Config migration**: `config.py` includes backward-compatibility logic for renamed keys.
+
+## Architecture overview
+
+### SDK dispatch pattern
+
+The project uses a dual-SDK architecture controlled by the `sdk` field in `~/.reverse-api/config.json`:
+
+- **`ClaudeEngineer`** (`engineer.py`): Uses `claude-agent-sdk` for direct Claude API integration.
+- **`OpenCodeEngineer`** (`opencode_engineer.py`): Uses `httpx` to communicate with a local OpenCode server at `http://127.0.0.1:4096`.
+
+Both inherit from `BaseEngineer`, an abstract base class that defines the common interface and shared prompt-building logic.
+
+### Key components
+
+| File | Responsibility |
+|---|---|
+| `cli.py` | Main entry point, mode cycling, slash commands, interactive prompts |
+| `browser.py` | Playwright HAR capture with stealth mode; `ManualBrowser` and `run_agent_browser()` |
+| `config.py` | JSON-based config manager at `~/.reverse-api/config.json` |
+| `session.py` | Run history with costs and metadata |
+| `messages.py` | Persists full LLM conversation logs per run |
+| `tui.py`, `opencode_ui.py` | Rich-based terminal UI for progress tracking |
+
+### Data flow
+
+```
+Browser captures HAR → ~/.reverse-api/runs/har/{run_id}/
+    ↓
+Engineer analyzes HAR with LLM → generates Python/JS/TS scripts
+    ↓
+Scripts saved to:
+  ~/.reverse-api/runs/scripts/{run_id}/  (permanent)
+  ./scripts/{descriptive_name}/           (local copy)
+```
+
+### File structure
+
+```
+src/reverse_api/
+├── cli.py              # Main entry point, mode cycling, slash commands
+├── base_engineer.py    # Abstract base for SDK implementations
+├── engineer.py         # Claude SDK implementation
+├── opencode_engineer.py # OpenCode SDK implementation
+├── browser.py          # Playwright HAR capture + agent mode
+├── config.py           # Configuration manager
+├── session.py          # Run history and metadata
+├── messages.py         # Message persistence
+├── pricing.py          # Model pricing database
+├── tui.py              # Terminal UI (Rich-based)
+├── opencode_ui.py      # OpenCode-specific UI extensions
+└── utils.py            # Path helpers, run ID generation
+
+~/.reverse-api/
+├── config.json         # User configuration
+├── history.json        # Run history with costs
+└── runs/
+    ├── har/{run_id}/       # Captured traffic per run
+    ├── scripts/{run_id}/   # Generated API clients per run
+    └── messages/           # LLM conversation logs
+        └── {run_id}.jsonl
+```
+
+## Common tasks
+
+### Adding a new model
+
+1. Add pricing to the `MODEL_PRICING` dict in `pricing.py` (if the model is not already in LiteLLM).
+2. Update model choices in `tui.py` `get_model_choices()` if needed.
+3. Update the model list in `README.md`.
+
+### Adding a new agent provider
+
+1. Add provider logic to `browser.py` `run_agent_browser()`.
+2. Add config fields to `config.py` `DEFAULT_CONFIG`.
+3. Update the settings menu in `cli.py`.
+4. Document the new provider in `README.md`.
+
+## Debugging
+
+- **OpenCode debug logs**: Set `OPENCODE_DEBUG=1` before running to get detailed output.
+- **Stagehand logs**: Suppressed automatically by `_suppress_stagehand_logs()` in `browser.py`. Use `DEBUG=1` to see full stack traces from CLI stderr.
+- **Message logs**: All LLM interactions are saved to `~/.reverse-api/runs/messages/{run_id}.jsonl` for inspection.
+
+## Pull request process
+
+1. Create a feature branch from `main`.
+2. Make your changes and run linting (`./scripts/lint.sh`).
+3. Test locally using one of the methods above.
+4. Submit a pull request with a clear description of the change.
+
+<Note>
+Include steps to reproduce any bug you're fixing, and attach relevant error messages or logs.
+</Note>
+
+## Release process
+
+The version is defined only in `pyproject.toml`. `src/reverse_api/__init__.py` reads it dynamically via `importlib.metadata` — never edit that file manually.
+
+<Steps>
+  <Step title="Update the version">
+    Edit `pyproject.toml`:
+
+    ```toml
+    version = "x.y.z"
+    ```
+  </Step>
+
+  <Step title="Update the changelog">
+    Add release notes to `CHANGELOG.md`.
+  </Step>
+
+  <Step title="Build">
+    ```bash
+    ./scripts/clean_build.sh
+    ```
+  </Step>
+
+  <Step title="Commit and tag">
+    ```bash
+    git add pyproject.toml CHANGELOG.md
+    git commit -m "release: vx.y.z - description"
+    git tag vx.y.z -m "Release vx.y.z: description"
+    git push origin main
+    git push origin vx.y.z
+    ```
+  </Step>
+
+  <Step title="Publish to PyPI">
+    ```bash
+    source .env  # contains UV_PUBLISH_TOKEN or PYPI_TOKEN
+    uv publish
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+See `RELEASING.md` in the repository for the full release process details.
+</Tip>
+
+## Reporting issues
+
+- Use the [GitHub issue tracker](https://github.com/kalil0321/reverse-api-engineer/issues).
+- Include steps to reproduce the problem.
+- Provide your OS and Python version.
+- Attach any error messages or relevant log output.

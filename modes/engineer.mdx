@@ -1,0 +1,122 @@
+---
+title: "Engineer mode"
+description: "Re-run AI code generation on any previous HAR capture without opening a browser."
+---
+
+Engineer mode lets you re-process an existing capture. If you want to iterate on generated code, add new instructions, or generate an OpenAPI spec from a capture you already have, switch to engineer mode and reference the run by its ID.
+
+## Switching to engineer mode
+
+Press **Shift+Tab** from the main prompt to cycle through modes until you reach `[engineer]`.
+
+You can also invoke it directly from the command line:
+
+```bash
+reverse-api-engineer engineer <run_id>
+```
+
+## Tag system
+
+Engineer mode is driven by tags. All inputs are parsed for these tags before the job runs.
+
+### `@id`
+
+Target a specific run ID.
+
+```
+[engineer] > @id abc123
+```
+
+This switches the active context to run `abc123`. Subsequent prompts in the same session operate on that run.
+
+To run generation on a specific run with custom instructions in one command:
+
+```
+[engineer] > @id abc123 extract only the authentication endpoints
+```
+
+### `@id` with `--fresh`
+
+Add `--fresh` to ignore any previously generated scripts and start from scratch:
+
+```
+[engineer] > @id abc123 --fresh restart analysis with better error handling
+```
+
+<Note>
+  Without `--fresh`, the engineer receives the existing scripts as context and treats your prompt as additive instructions. With `--fresh`, it generates entirely new code.
+</Note>
+
+### `@docs`
+
+Generate an OpenAPI specification instead of an API client:
+
+```
+[engineer] > @docs
+```
+
+This creates an OpenAPI spec from the most recent capture. To target a specific run:
+
+```
+[engineer] > @id abc123 @docs
+```
+
+<Warning>
+  `@docs` requires the target run to have a captured HAR file. If the run has no HAR (e.g., it was a collector run), you will see an error.
+</Warning>
+
+## Workflow
+
+<Steps>
+  <Step title="Switch to engineer mode">
+    Press **Shift+Tab** until the prompt shows `[engineer]`.
+  </Step>
+
+  <Step title="Reference a run">
+    Enter a run ID directly or use `@id`:
+
+    ```
+    [engineer] > abc123
+    ```
+
+    Use `/history` to browse past runs and find IDs:
+
+    ```
+    [engineer] > /history
+    ```
+  </Step>
+
+  <Step title="Add instructions (optional)">
+    Type additional instructions after the run ID to guide the engineer:
+
+    ```
+    [engineer] > @id abc123 add retry logic and better error messages
+    ```
+
+    Leave the prompt empty after the ID to re-run with the original prompt.
+  </Step>
+
+  <Step title="Review the output">
+    The updated scripts are saved to the same permanent location and the local `./scripts/` copy is refreshed.
+  </Step>
+</Steps>
+
+## Quick reference
+
+| Input | What it does |
+|-------|--------------|
+| `@id <run_id>` | Switch context to a run |
+| `@id <run_id> <prompt>` | Re-engineer with new instructions |
+| `@id <run_id> --fresh <prompt>` | Regenerate from scratch |
+| `<run_id>` | Same as `@id <run_id>` |
+| `<prompt>` | Run on the current context / latest run |
+| `@docs` | Generate OpenAPI spec for the latest run |
+| `@id <run_id> @docs` | Generate OpenAPI spec for a specific run |
+
+## When to use engineer mode
+
+- You ran a capture but want to improve the generated code
+- You used `@record-only` earlier and are ready to generate
+- You want to try different instructions on the same HAR data
+- You want an OpenAPI spec alongside (or instead of) the client code
+- You noticed a bug in the generated client and want to iterate quickly

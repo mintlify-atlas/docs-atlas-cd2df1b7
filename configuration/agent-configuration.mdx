@@ -1,0 +1,138 @@
+---
+title: "Agent configuration"
+description: "Configure the agent provider and model for autonomous browser automation in agent mode."
+---
+
+Agent mode lets an AI autonomously navigate a browser, capture network traffic, and generate an API client — all without manual interaction. You control which agent backend drives the browser.
+
+## Agent providers
+
+<CardGroup cols={2}>
+  <Card title="auto" icon="wand-magic-sparkles">
+    MCP-based browser automation with Claude Agent SDK. No extra installation required. Works with both the Claude SDK and OpenCode SDK.
+  </Card>
+  <Card title="browser-use" icon="browser">
+    Multi-model browser automation using the browser-use library. Supports Browser-Use LLM, OpenAI, and Google models. Requires the `[agent]` extra.
+  </Card>
+  <Card title="stagehand" icon="computer">
+    Computer Use models only. Supports OpenAI and Anthropic Computer Use models. Uses the Stagehand library.
+  </Card>
+</CardGroup>
+
+### auto (default)
+
+The `auto` provider uses MCP-based browser tools alongside the Claude Agent SDK. It combines browser navigation and real-time reverse engineering in a single workflow. No additional packages beyond the base install are required.
+
+This provider works with both the `claude` SDK and the `opencode` SDK, giving you model flexibility without extra dependencies.
+
+### browser-use
+
+The `browser-use` provider drives a browser using the [browser-use](https://github.com/browser-use/browser-use) library. It supports multiple model providers and is the most flexible option for non-Claude models.
+
+**Required installation:**
+
+<CodeGroup>
+
+```bash uv
+uv tool install 'reverse-api-engineer[agent]' \
+  --with 'browser-use @ git+https://github.com/browser-use/browser-use.git@49a345fb19e9f12befc5cc1658e0033873892455'
+```
+
+```bash pip
+pip install 'reverse-api-engineer[agent]'
+pip install 'git+https://github.com/browser-use/browser-use.git@49a345fb19e9f12befc5cc1658e0033873892455'
+```
+
+</CodeGroup>
+
+<Warning>
+  You must install browser-use from the specific git commit shown above. This version includes HAR recording support, which is required for API capture.
+</Warning>
+
+**Supported models:**
+
+| Model value | Provider | Required env var |
+|---|---|---|
+| `bu-llm` | Browser-Use LLM (default) | `BROWSER_USE_API_KEY` |
+| `openai/gpt-4` | OpenAI | `OPENAI_API_KEY` |
+| `openai/gpt-3.5-turbo` | OpenAI | `OPENAI_API_KEY` |
+| `google/gemini-pro` | Google | `GOOGLE_API_KEY` |
+| `google/gemini-1.5-pro` | Google | `GOOGLE_API_KEY` |
+
+Model values use the format `bu-llm` for the Browser-Use LLM, or `{provider}/{model}` for other providers.
+
+### stagehand
+
+The `stagehand` provider uses Stagehand with Computer Use models. Only Computer Use-compatible models are supported.
+
+**Supported models:**
+
+| Model value | Provider | Required env var |
+|---|---|---|
+| `openai/computer-use-preview-2025-03-11` | OpenAI (default) | `OPENAI_API_KEY` |
+| `anthropic/claude-sonnet-4-6-20260301` | Anthropic | `ANTHROPIC_API_KEY` |
+| `anthropic/claude-haiku-4-5-20251001` | Anthropic | `ANTHROPIC_API_KEY` |
+| `anthropic/claude-opus-4-6-20260301` | Anthropic | `ANTHROPIC_API_KEY` |
+
+## API keys
+
+Set API keys as environment variables before starting the CLI:
+
+```bash
+export BROWSER_USE_API_KEY="your-api-key"  # For Browser-Use LLM
+export OPENAI_API_KEY="your-api-key"       # For OpenAI models
+export ANTHROPIC_API_KEY="your-api-key"    # For Anthropic models
+export GOOGLE_API_KEY="your-api-key"       # For Google models
+```
+
+<ParamField path="BROWSER_USE_API_KEY" type="string">
+  Required when `browser_use_model` is `bu-llm`. Authenticates with the Browser-Use LLM service.
+</ParamField>
+
+<ParamField path="OPENAI_API_KEY" type="string">
+  Required when using any `openai/*` model with browser-use, or the `openai/computer-use-preview-*` model with stagehand.
+</ParamField>
+
+<ParamField path="ANTHROPIC_API_KEY" type="string">
+  Required when using any `anthropic/*` model with stagehand, or when using the `claude` SDK for reverse engineering.
+</ParamField>
+
+<ParamField path="GOOGLE_API_KEY" type="string">
+  Required when using any `google/*` model with browser-use.
+</ParamField>
+
+## How to change the agent provider
+
+<Tabs>
+  <Tab title="/settings command">
+    Type `/settings` at the CLI prompt, then select **Agent Provider**. Choose from `auto`, `browser-use`, or `stagehand`.
+
+    To change the model for the selected provider, select **Browser-Use Model** or **Stagehand Model** from the same menu.
+  </Tab>
+  <Tab title="config.json">
+    Edit `~/.reverse-api/config.json` directly:
+
+    ```json
+    {
+      "agent_provider": "browser-use",
+      "browser_use_model": "openai/gpt-4"
+    }
+    ```
+
+    For stagehand:
+
+    ```json
+    {
+      "agent_provider": "stagehand",
+      "stagehand_model": "anthropic/claude-sonnet-4-6-20260301"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Model naming format
+
+- **browser-use models:** Use `bu-llm` for the Browser-Use LLM, or `{provider}/{model}` for others — for example, `openai/gpt-4` or `google/gemini-pro`.
+- **stagehand models:** Always use `{provider}/{model}` — for example, `openai/computer-use-preview-2025-03-11` or `anthropic/claude-sonnet-4-6-20260301`.
+
+The CLI validates the format when you change the model via `/settings` and shows the accepted formats on error.

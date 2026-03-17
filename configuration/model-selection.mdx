@@ -1,0 +1,112 @@
+---
+title: "Model selection"
+description: "Choose the right Claude model for your reverse engineering sessions and understand how pricing is calculated."
+---
+
+Reverse API Engineer supports multiple models for different trade-offs between speed, cost, and capability. The active model depends on which SDK you have configured.
+
+## Claude SDK models
+
+When using the default `claude` SDK, the `claude_code_model` setting controls which model handles reverse engineering. You can also set a separate `collector_model` for collector mode.
+
+| Model | Config value | Best for |
+|---|---|---|
+| Sonnet 4.6 | `claude-sonnet-4-6` | Balanced performance and cost (default) |
+| Opus 4.6 | `claude-opus-4-6` | Maximum capability for complex or ambiguous APIs |
+| Haiku 4.5 | `claude-haiku-4-5` | Fastest responses and lowest cost |
+
+### `claude_code_model` vs `collector_model`
+
+These are two separate config keys:
+
+- **`claude_code_model`** — used for all reverse engineering sessions (manual, engineer, and agent modes)
+- **`collector_model`** — used exclusively in collector mode
+
+This lets you run a cheaper model for data collection while keeping a more capable model for API generation.
+
+## OpenCode SDK models
+
+When `sdk` is set to `opencode`, the `opencode_model` setting is used instead of `claude_code_model`. The OpenCode SDK supports a broader range of models beyond Claude, including Gemini:
+
+- `claude-sonnet-4-6`
+- `claude-opus-4-6`
+- `gemini-3-flash`
+- `gemini-3-pro`
+- `gemini-3-pro-low`
+- `gemini-3-pro-high`
+
+For the full list of models available through OpenCode, see [models.dev](https://models.dev).
+
+## How to change the model
+
+<Tabs>
+  <Tab title="/settings command">
+    Type `/settings` at the CLI prompt, then select **Claude Code Model** from the menu. Choose from the available options:
+
+    - `sonnet 4.6 [balanced]` → `claude-sonnet-4-6`
+    - `opus 4.6 [power]` → `claude-opus-4-6`
+    - `haiku 4.5 [speed]` → `claude-haiku-4-5`
+  </Tab>
+  <Tab title="CLI flag">
+    Pass the `--model` flag when starting a manual session:
+
+    ```bash
+    reverse-api-engineer manual --model claude-sonnet-4-6
+    reverse-api-engineer manual --model claude-opus-4-6
+    reverse-api-engineer manual --model claude-haiku-4-5
+    ```
+  </Tab>
+  <Tab title="config.json">
+    Edit `~/.reverse-api/config.json` directly:
+
+    ```json
+    {
+      "claude_code_model": "claude-opus-4-6"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Pricing
+
+Cost tracking is always active regardless of which model you use. Every session shows token usage and an estimated cost in USD when it completes.
+
+### 3-tier pricing fallback
+
+The cost calculation uses a tiered lookup system:
+
+1. **Local pricing** — Built-in pricing data for common models (Claude 4.6 series, Gemini 3 series). Always available, no extras required.
+2. **LiteLLM pricing** — If you install the `[pricing]` extra, this extends coverage to 100+ models including OpenAI GPT, Mistral, DeepSeek, and more.
+3. **Default fallback** — If a model isn't found in either source, Claude Sonnet 4.6 pricing is used as an approximation.
+
+### Install extended pricing support
+
+<CodeGroup>
+
+```bash uv
+uv tool install 'reverse-api-engineer[pricing]'
+```
+
+```bash pip
+pip install 'reverse-api-engineer[pricing]'
+```
+
+</CodeGroup>
+
+<Note>
+  Cost tracking always works, even without the `[pricing]` extra. The extra only improves accuracy for models outside the built-in database.
+</Note>
+
+### Built-in pricing reference
+
+| Model | Input (per 1M tokens) | Output (per 1M tokens) |
+|---|---|---|
+| `claude-sonnet-4-6` | $3.00 | $15.00 |
+| `claude-opus-4-6` | $15.00 | $75.00 |
+| `claude-haiku-4-5` | $1.00 | $5.00 |
+| `gemini-3-flash` | $0.50 | $3.00 |
+| `gemini-3-pro` | $3.00 | $12.00 |
+
+<Tip>
+  Use `claude-haiku-4-5` for rapid iteration and exploratory sessions. Switch to `claude-opus-4-6` when you need maximum accuracy on complex, undocumented APIs.
+</Tip>

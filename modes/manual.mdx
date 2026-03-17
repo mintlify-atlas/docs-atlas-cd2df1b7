@@ -1,0 +1,133 @@
+---
+title: "Manual mode"
+description: "Capture browser traffic yourself, then let AI generate a production-ready API client."
+---
+
+Manual mode gives you full control over the browser session. You navigate and interact with the website while the tool records all network traffic as a HAR file. When you close the browser, AI analyzes the captured requests and generates a complete API client.
+
+Use manual mode when a site requires human judgment to navigate — complex login flows, CAPTCHAs, multi-step wizards, or anything that would trip up an automated agent.
+
+## Workflow
+
+<Steps>
+  <Step title="Start the CLI">
+    ```bash
+    reverse-api-engineer
+    ```
+
+    The prompt defaults to `[agent]` mode. Press **Shift+Tab** to cycle to `[manual]`.
+  </Step>
+
+  <Step title="Enter a task description">
+    Describe what you want to capture. The description becomes the prompt for AI code generation later.
+
+    ```
+    [manual] > fetch all apple jobs from their careers page
+    ```
+  </Step>
+
+  <Step title="Optionally provide a starting URL">
+    After you submit the task, the CLI prompts for a URL:
+
+    ```
+     > url  (Enter for none)
+    ```
+
+    Leave it blank to open a new browser tab at `about:blank`, or enter a URL to navigate there immediately.
+  </Step>
+
+  <Step title="Browse and interact">
+    A Chromium browser opens with HAR recording enabled. Navigate to the site, log in, trigger searches, click through pagination — anything needed to capture the API calls you want.
+
+    <Tip>
+      The browser uses stealth mode and a realistic user agent to minimize bot-detection issues. It tries your existing Chrome profile first, then falls back to a clean Chromium instance.
+    </Tip>
+  </Step>
+
+  <Step title="Close the browser">
+    Close the browser window (or press **Ctrl+C** in the terminal) when you have captured everything you need. All network traffic is flushed and saved automatically.
+  </Step>
+
+  <Step title="AI generates the API client">
+    Claude analyzes the HAR file and writes production-ready code. You can watch files appear in real time if `real_time_sync` is enabled (the default).
+  </Step>
+</Steps>
+
+## Output files
+
+After generation completes, you get three files:
+
+| File | Contents |
+|------|----------|
+| `api_client.py` | Full API implementation with type hints, error handling, and docstrings |
+| `example_usage.py` | Runnable examples for every endpoint |
+| `README.md` | Authentication guide and usage documentation |
+
+Files are written to two locations:
+
+- **`~/.reverse-api/runs/scripts/{run_id}/`** — permanent storage, never overwritten
+- **`./scripts/{descriptive_name}/`** — local copy with a readable, AI-generated folder name
+
+## Tags
+
+Prefix your task description with a tag to change how manual mode behaves.
+
+### `@record-only`
+
+Captures traffic without running AI generation. Use this when you want to record now and engineer later.
+
+```
+[manual] > @record-only navigate checkout flow
+```
+
+After the browser closes, the CLI prints the `run_id` so you can reference it in engineer mode:
+
+```
+ > recording complete
+ > run_id: abc123
+ > use @id abc123 <prompt> to engineer later
+```
+
+### `@codegen`
+
+Records your clicks, form fills, and navigations and generates a reusable Playwright automation script instead of an API client.
+
+```
+[manual] > @codegen navigate to google and search for openai
+```
+
+## Example session
+
+```bash
+$ reverse-api-engineer
+# Press Shift+Tab to switch to manual mode
+
+[manual] > fetch apple job listings
+ > url  (Enter for none): https://jobs.apple.com
+
+# Browser opens — browse and interact
+# Close the browser when done
+
+ # AI generates:
+ # - api_client.py
+ # - example_usage.py
+ # - README.md
+
+ # Scripts saved to: ./scripts/apple_job_listings/
+```
+
+## When to use manual mode
+
+<CardGroup cols={2}>
+  <Card title="Use manual mode when..." icon="user">
+    - The site uses CAPTCHAs or aggressive bot detection
+    - Login requires MFA or OAuth browser flows
+    - You need to navigate a specific, non-obvious path
+    - You want to record traffic for later analysis with `@record-only`
+  </Card>
+  <Card title="Use agent mode instead when..." icon="robot">
+    - The task is straightforward and describable in plain language
+    - You want a fully hands-off, automated workflow
+    - You are running captures in batch or unattended
+  </Card>
+</CardGroup>

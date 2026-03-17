@@ -1,0 +1,140 @@
+---
+title: "Installation"
+description: "Install Reverse API Engineer via uv or pip, set up Playwright browsers, and configure your API keys."
+---
+
+## Requirements
+
+- Python 3.11 or later
+- An `ANTHROPIC_API_KEY` for the default Claude SDK (or a running OpenCode instance)
+- Playwright's Chromium browser (installed in a separate step below)
+
+## Install the package
+
+<Steps>
+  <Step title="Install reverse-api-engineer">
+    Choose the installation method that matches your workflow. `uv` is recommended because it creates an isolated tool environment and makes upgrades straightforward.
+
+    <CodeGroup>
+
+    ```bash uv (recommended)
+    # Basic installation
+    uv tool install reverse-api-engineer
+
+    # With agent mode support
+    uv tool install 'reverse-api-engineer[agent]' --with 'browser-use @ git+https://github.com/browser-use/browser-use.git@49a345fb19e9f12befc5cc1658e0033873892455'
+    ```
+
+    ```bash pip
+    # Basic installation
+    pip install reverse-api-engineer
+
+    # With agent mode support
+    pip install 'reverse-api-engineer[agent]'
+    pip install git+https://github.com/browser-use/browser-use.git@49a345fb19e9f12befc5cc1658e0033873892455
+    ```
+
+    </CodeGroup>
+
+    <Note>
+      The `[agent]` extra installs Stagehand for browser automation. The `browser-use` library must be installed separately from a specific git commit because it includes HAR recording support not yet published to PyPI.
+    </Note>
+  </Step>
+
+  <Step title="Install Playwright browsers">
+    Reverse API Engineer uses Playwright to open and control a browser. After installing the package, install the Chromium browser:
+
+    ```bash
+    playwright install chromium
+    ```
+  </Step>
+
+  <Step title="Set your API key">
+    The default SDK uses Claude directly. Export your Anthropic API key so the tool can reach it at runtime:
+
+    ```bash
+    export ANTHROPIC_API_KEY="your-api-key"
+    ```
+
+    Add this line to your shell profile (`.bashrc`, `.zshrc`, etc.) to avoid repeating it each session.
+
+    <Note>
+      If you use the OpenCode SDK instead, you don't need an `ANTHROPIC_API_KEY`. See the [configuration guide](/configuration/overview) for details.
+    </Note>
+  </Step>
+
+  <Step title="Verify the installation">
+    Confirm the CLI is available and shows the correct version:
+
+    ```bash
+    reverse-api-engineer --version
+    ```
+
+    You should see output like `reverse-api-engineer, version 0.4.5`. If you get a "command not found" error with `uv tool install`, ensure `~/.local/bin` is on your `PATH`.
+  </Step>
+</Steps>
+
+## Optional extras
+
+Install optional extras to unlock additional capabilities.
+
+### `[pricing]` — extended model cost tracking
+
+By default, the tool includes pricing for common models (Claude 4.6, Gemini 3). For coverage of 100+ additional models — including OpenAI GPT, Mistral, and DeepSeek — install the pricing extra:
+
+<CodeGroup>
+
+```bash uv
+uv tool install 'reverse-api-engineer[pricing]'
+```
+
+```bash pip
+pip install 'reverse-api-engineer[pricing]'
+```
+
+</CodeGroup>
+
+This adds [LiteLLM](https://github.com/BerriAI/litellm) as a fallback for pricing lookups. Cost tracking always works regardless of whether this extra is installed.
+
+### `[agent]` — additional agent providers
+
+The `[agent]` extra adds Stagehand alongside the default `auto` agent provider. Install it if you want to use Stagehand's Computer Use models:
+
+<CodeGroup>
+
+```bash uv
+uv tool install 'reverse-api-engineer[agent]' --with 'browser-use @ git+https://github.com/browser-use/browser-use.git@49a345fb19e9f12befc5cc1658e0033873892455'
+```
+
+```bash pip
+pip install 'reverse-api-engineer[agent]'
+pip install git+https://github.com/browser-use/browser-use.git@49a345fb19e9f12befc5cc1658e0033873892455
+```
+
+</CodeGroup>
+
+## API keys for agent providers
+
+If you use an agent provider other than the default `auto` mode, you need the corresponding API key:
+
+```bash
+export ANTHROPIC_API_KEY="your-api-key"   # Default auto mode and Anthropic Stagehand models
+export OPENAI_API_KEY="your-api-key"       # OpenAI Stagehand models
+export BROWSER_USE_API_KEY="your-api-key" # Browser-Use LLM (bu-llm)
+export GOOGLE_API_KEY="your-api-key"      # Google models with browser-use
+```
+
+The default `auto` agent provider uses MCP-based browser automation and only requires `ANTHROPIC_API_KEY` (already set in the step above). You only need additional keys if you change the agent provider in `/settings`.
+
+## Configuration file
+
+Settings are stored at `~/.reverse-api/config.json` and created automatically on first run. You don't need to create or edit this file manually — use the `/settings` command inside the CLI instead.
+
+```json ~/.reverse-api/config.json
+{
+  "agent_provider": "auto",
+  "claude_code_model": "claude-sonnet-4-6",
+  "output_language": "python",
+  "sdk": "claude"
+}
+```

@@ -1,0 +1,98 @@
+---
+title: "Introduction"
+description: "Reverse engineer any web API by capturing browser traffic and generating production-ready API clients with AI."
+---
+
+<img
+  src="https://raw.githubusercontent.com/kalil0321/reverse-api-engineer/main/assets/reverse-api-banner.svg"
+  alt="Reverse API Engineer"
+  style={{ borderRadius: '8px', marginBottom: '24px' }}
+/>
+
+## What is Reverse API Engineer?
+
+Reverse API Engineer is a CLI tool that eliminates the tedium of manual API reverse engineering. Instead of inspecting network requests by hand and writing boilerplate code from scratch, you simply browse a website while the tool records all network traffic — then AI analyzes the captured data and generates a clean, production-ready API client automatically.
+
+No more digging through browser DevTools. No more manually copying headers and request bodies. Just browse, capture, and get code.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get from install to your first generated API client in under 5 minutes.
+  </Card>
+  <Card title="Installation" icon="download" href="/installation">
+    Install via uv or pip, set up Playwright browsers, and configure your API keys.
+  </Card>
+  <Card title="Usage Modes" icon="sliders" href="/modes/manual">
+    Choose between Manual, Engineer, Agent, and Collector modes for different workflows.
+  </Card>
+  <Card title="Configuration" icon="gear" href="/configuration/overview">
+    Configure models, SDKs, output language, and agent providers.
+  </Card>
+</CardGroup>
+
+## How it works
+
+<Steps>
+  <Step title="Browse and capture">
+    Open a browser session with HAR recording enabled. Navigate to the website and interact with it — log in, search, click, scroll — to trigger the API calls you want to capture.
+  </Step>
+  <Step title="Close the browser">
+    When you're done, close the browser. All network traffic has been saved as a HAR (HTTP Archive) file.
+  </Step>
+  <Step title="AI generates your client">
+    Claude analyzes the HAR file, identifies API endpoints, authentication patterns, and request/response schemas, then generates clean Python (or JavaScript/TypeScript) code.
+  </Step>
+  <Step title="Use your API client">
+    Your generated scripts are saved to `./scripts/{task_name}/` with an API client, usage examples, and README documentation.
+  </Step>
+</Steps>
+
+## Key features
+
+<CardGroup cols={2}>
+  <Card title="Browser automation" icon="globe">
+    Built on Playwright with stealth mode to avoid bot detection during capture sessions.
+  </Card>
+  <Card title="HAR recording" icon="network-wired">
+    Captures every HTTP request and response in the standard HTTP Archive format.
+  </Card>
+  <Card title="AI code generation" icon="sparkles">
+    Claude 4.6 analyzes traffic patterns and generates type-hinted, production-ready API clients.
+  </Card>
+  <Card title="Autonomous agent mode" icon="robot">
+    Fully automated browser navigation — describe the task and let the AI do the browsing.
+  </Card>
+  <Card title="Multi-language output" icon="code">
+    Generate API clients in Python, JavaScript, or TypeScript.
+  </Card>
+  <Card title="Tag system" icon="tag">
+    Fine-grained control with `@record-only`, `@codegen`, `@docs`, and `@id` tags.
+  </Card>
+  <Card title="Cost tracking" icon="dollar-sign">
+    Detailed token usage and cost estimation for every session, with cache support.
+  </Card>
+  <Card title="Session history" icon="clock-rotate-left">
+    All runs saved locally with full message logs for re-engineering and iteration.
+  </Card>
+</CardGroup>
+
+## Operating modes
+
+| Mode | Description | Best for |
+|------|-------------|----------|
+| **agent** | Autonomous AI-driven browser navigation | Automatable tasks where you describe the goal |
+| **manual** | You browse, AI generates the client | Complex sites needing human navigation |
+| **engineer** | Re-process an existing HAR capture | Iterating on previous sessions |
+| **collector** | AI-powered web data collection to JSON/CSV | Structured data extraction |
+
+Switch between modes with **Shift+Tab** in the interactive CLI.
+
+## Requirements
+
+- Python 3.11+
+- An `ANTHROPIC_API_KEY` (for Claude SDK) or a running OpenCode instance
+- Playwright browsers (installed separately after pip install)
+
+<Note>
+  This tool executes AI-generated code locally using Claude Code. Always review generated scripts before running them in production environments.
+</Note>

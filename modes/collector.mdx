@@ -1,0 +1,119 @@
+---
+title: "Collector mode"
+description: "Collect structured web data using natural language — outputs JSON and CSV automatically."
+---
+
+Collector mode lets you describe the data you want in plain language. An AI agent uses web search and page fetching to find and extract structured items, then exports everything to JSON and CSV files. No browser window opens — it is entirely AI-driven.
+
+## How to use it
+
+Press **Shift+Tab** to cycle to `[collector]`, then describe what you want to collect:
+
+```
+[collector] > Find 3 JS frameworks with name, website, and GitHub stars
+```
+
+The agent searches the web, fetches relevant pages, extracts structured data, and saves each item as it finds it. When complete, it exports the collection to `items.json`, `items.csv`, and a `README.md`.
+
+## Workflow
+
+<Steps>
+  <Step title="Switch to collector mode">
+    Press **Shift+Tab** until the prompt shows `[collector]`.
+  </Step>
+
+  <Step title="Enter a natural language prompt">
+    Describe the data you want to collect:
+
+    ```
+    [collector] > Find 10 YC W24 AI startups with name, website, and funding amount
+    ```
+
+    Be specific about fields you want — the agent uses your description to decide what to extract and how to structure each item.
+  </Step>
+
+  <Step title="Agent collects data autonomously">
+    The agent uses three tools to collect data:
+    - **WebSearch** — finds relevant sources
+    - **WebFetch** — fetches and reads page content
+    - **Write** — saves items incrementally to a JSONL file as they are found
+  </Step>
+
+  <Step title="Output is exported">
+    After collection, the raw JSONL is post-processed into clean JSON and CSV files alongside a README with schema documentation.
+  </Step>
+</Steps>
+
+## Output files
+
+| File | Contents |
+|------|----------|
+| `items.json` | All collected items as a JSON array |
+| `items.csv` | Same data in CSV format with auto-detected columns |
+| `README.md` | Collection metadata: query, item count, sources, and field schema |
+
+Files are written to two locations:
+
+- **`~/.reverse-api/runs/collected/{folder}/`** — permanent storage
+- **`./collected/{folder}/`** — local copy with an AI-generated folder name
+
+## Example
+
+```bash
+$ reverse-api-engineer
+# Press Shift+Tab twice to reach collector mode
+
+[collector] > Find 3 JS frameworks
+
+# Agent searches the web and collects data
+# Output saved to: ./collected/js_frameworks/
+```
+
+The resulting `items.json` might look like:
+
+```json title="items.json"
+[
+  {
+    "name": "React",
+    "website": "https://react.dev",
+    "description": "A JavaScript library for building user interfaces",
+    "source_url": "https://github.com/facebook/react"
+  },
+  ...
+]
+```
+
+## Model configuration
+
+Collector mode uses the `collector_model` setting, which defaults to `claude-sonnet-4-6`. You can change it in `/settings` or by editing `~/.reverse-api/config.json` directly:
+
+```json title="~/.reverse-api/config.json"
+{
+  "collector_model": "claude-sonnet-4-6"
+}
+```
+
+<Tip>
+  Collector mode is independent of the agent provider setting. It always uses the Claude Agent SDK regardless of what you have configured for agent mode.
+</Tip>
+
+## When collector mode is useful
+
+<CardGroup cols={2}>
+  <Card title="Structured data extraction" icon="table">
+    Pulling lists of items — companies, products, articles, jobs — where you want consistent fields across every record.
+  </Card>
+  <Card title="Research and benchmarking" icon="magnifying-glass">
+    Gathering comparison data from multiple sources without writing a custom scraper.
+  </Card>
+  <Card title="Lightweight collection" icon="feather">
+    When you do not need an API client — just the data itself in a usable format.
+  </Card>
+  <Card title="Incremental saves" icon="floppy-disk">
+    Items are saved as they are found, so partial results are preserved even if the session is interrupted.
+  </Card>
+</CardGroup>
+
+<Note>
+  Collector mode works best for publicly accessible data. For sites that require login, use [manual mode](/modes/manual) or [agent mode](/modes/agent) to capture authenticated traffic, then use [engineer mode](/modes/engineer) to generate the client.
+</Note>

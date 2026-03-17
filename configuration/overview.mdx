@@ -1,0 +1,125 @@
+---
+title: "Configuration overview"
+description: "Understand the config.json file and all available settings for Reverse API Engineer."
+---
+
+Reverse API Engineer stores all settings in a single JSON file at `~/.reverse-api/config.json`. You can edit settings interactively via the `/settings` command or by editing the file directly.
+
+## Config file location
+
+```
+~/.reverse-api/config.json
+```
+
+The file is created automatically on first run with the default values below.
+
+## Default configuration
+
+```json
+{
+  "agent_provider": "auto",
+  "browser_use_model": "bu-llm",
+  "claude_code_model": "claude-sonnet-4-6",
+  "collector_model": "claude-sonnet-4-6",
+  "copilot_model": "gpt-5",
+  "opencode_model": "claude-opus-4-6",
+  "opencode_provider": "anthropic",
+  "output_dir": null,
+  "output_language": "python",
+  "real_time_sync": true,
+  "sdk": "claude",
+  "stagehand_model": "openai/computer-use-preview-2025-03-11"
+}
+```
+
+## How to edit settings
+
+### Via `/settings` command
+
+Type `/settings` at the CLI prompt to open the interactive settings menu. Use the arrow keys to select a setting, and follow the prompts to change its value. Changes are saved immediately.
+
+```
+[agent] > /settings
+```
+
+### By editing config.json directly
+
+Open `~/.reverse-api/config.json` in any text editor, update the values, and save. The next CLI session picks up the changes automatically.
+
+```bash
+nano ~/.reverse-api/config.json
+```
+
+<Note>
+  If the file is corrupted or contains invalid JSON, the CLI falls back to default values without overwriting your file.
+</Note>
+
+## Config options reference
+
+<ParamField path="agent_provider" type="string" default="auto">
+  The agent provider to use in agent mode. Options: `auto`, `browser-use`, `stagehand`.
+
+  - `auto` — MCP-based browser automation with Claude Agent SDK. No extra installation required.
+  - `browser-use` — Uses the browser-use library. Requires `[agent]` extra.
+  - `stagehand` — Computer Use models only. Supports OpenAI and Anthropic models.
+</ParamField>
+
+<ParamField path="browser_use_model" type="string" default="bu-llm">
+  The model to use when `agent_provider` is `browser-use`. Accepts `bu-llm` or a provider-prefixed model string such as `openai/gpt-4` or `google/gemini-pro`.
+</ParamField>
+
+<ParamField path="claude_code_model" type="string" default="claude-sonnet-4-6">
+  The Claude model used for reverse engineering when the `claude` SDK is active. Options: `claude-sonnet-4-6`, `claude-opus-4-6`, `claude-haiku-4-5`.
+</ParamField>
+
+<ParamField path="collector_model" type="string" default="claude-sonnet-4-6">
+  The model used in collector mode for AI-powered data collection. Accepts the same values as `claude_code_model`.
+</ParamField>
+
+<ParamField path="copilot_model" type="string" default="gpt-5">
+  The model to use when the `copilot` SDK is active. Accepts any model identifier available through your GitHub Copilot subscription, such as `gpt-5` or `gpt-4.1`.
+</ParamField>
+
+<ParamField path="opencode_model" type="string" default="claude-opus-4-6">
+  The model to use when the `opencode` SDK is active. Accepts any model identifier supported by your running OpenCode instance, such as `claude-sonnet-4-6`, `gemini-3-flash`, or `gemini-3-pro`.
+</ParamField>
+
+<ParamField path="opencode_provider" type="string" default="anthropic">
+  The provider to pass to the OpenCode SDK. Common values: `anthropic`, `openai`, `google`.
+</ParamField>
+
+<ParamField path="output_dir" type="string | null" default="null">
+  Custom output directory for generated scripts and HAR files. When `null`, output is stored in `~/.reverse-api/runs` and mirrored to `./scripts/{name}/` in the current directory.
+</ParamField>
+
+<ParamField path="output_language" type="string" default="python">
+  Programming language for generated API clients. Options: `python`, `javascript`, `typescript`.
+</ParamField>
+
+<ParamField path="real_time_sync" type="boolean" default="true">
+  When `true`, generated files are written to disk as they are produced. When `false`, files are written only after the full engineering session completes. See [real-time sync](#real-time-sync) below.
+</ParamField>
+
+<ParamField path="sdk" type="string" default="claude">
+  The SDK to use for AI-powered reverse engineering. Options: `claude`, `opencode`, `copilot`.
+
+  See [SDK selection](/configuration/sdk-selection) for details on each option.
+</ParamField>
+
+<ParamField path="stagehand_model" type="string" default="openai/computer-use-preview-2025-03-11">
+  The Computer Use model to use when `agent_provider` is `stagehand`. Must use the `{provider}/{model}` format, for example `anthropic/claude-sonnet-4-6-20260301`.
+</ParamField>
+
+## Real-time sync
+
+With `real_time_sync` enabled (the default), files appear in `./scripts/{name}/` as Claude writes them — before the session ends. This lets you monitor the generation in progress and open files in your editor while the AI is still working.
+
+Disabling real-time sync is useful if you want cleaner writes or are working in environments where partial files cause issues.
+
+```json
+{
+  "real_time_sync": false
+}
+```
+
+Change this setting via `/settings` → **Real-time Sync**.
